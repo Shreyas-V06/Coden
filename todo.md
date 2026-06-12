@@ -1,0 +1,1 @@
+Imrpovements: add redis pipeline for atomicity 

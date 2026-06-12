@@ -5,3 +5,4 @@ redis
 pytest
 pytest-asyncio
 httpx
+websockets
