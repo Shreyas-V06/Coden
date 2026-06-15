@@ -4,16 +4,17 @@ import time
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
+#TODO: 
 async def addPlayerMetadata(player:User):
     key = "coden:queue:metadata"
     player_id = player.user_id
     timestamp = int(time.time())
-    await r.hset(key,player_id,timestamp)
+    player_metadata = {player_id:timestamp}
+    await r.zadd(key,player_metadata)
 
-async def removePlayerMetadata(player:User):
+async def removePlayerMetadata(player_id):
     key = "coden:queue:metadata"
-    player_id = player.user_id
-    await r.hdel(key,player_id)
+    await r.zrem(key,player_id)
 
 async def addPlayer(player:User):
     key = "coden:queue"
@@ -22,12 +23,10 @@ async def addPlayer(player:User):
     await r.zadd(key,{player_id:player_score})
     await addPlayerMetadata(player)
 
-async def removePlayer(player:User):
+async def removePlayer(player_id):
     key = "coden:queue"
-    player_id = player.user_id
-
     await r.zrem(key,player_id)
-    await removePlayerMetadata(player)
+    await removePlayerMetadata(player_id)
 
 
 
