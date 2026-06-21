@@ -1,53 +1,60 @@
-from services.redis_queue import r,removePlayer
+from services.redis_queue import r,removePlayer,metadata_key,queue_key
 import asyncio
 import time
 
-#TODO: Wrap it in redis pipeline 
 
-def calculateDelta(player_timestamp:int):
-    waitingTime = int(time.time())-player_timestamp
-    return 20+(waitingTime*3)
+MATCHMAKING_LUA_SCRIPT = """
+local metadata_key = KEYS[1]
+local queue_key = KEYS[2]
+local current_time = tonumber(ARGV[1])
+local batch_size = tonumber(ARGV[2])
+
+local candidates = redis.call('ZRANGE',metadata_key,0,batch_size-1,'WITHSCORES')
+if #candidates>0 then
+    for i=1,#candidates,2 do
+        local cid = candidates[i]
+        local ctime = tonumber(candidates[i+1])
+        local cscore_raw = redis.call('ZSCORE',queue_key,cid)
+        if not cscore_raw then
+            redis.call('ZREM',metadata_key,cid)
+            redis.call('ZREM',queue_key,cid)
+        else
+            local cscore = tonumber(cscore_raw)
+            local wait_time = current_time - ctime
+            local delta = 20 + (3*wait_time)
+            local lb = cscore-delta
+            local ub = cscore+delta
+            local search_pool = redis.call('ZRANGEBYSCORE',queue_key,lb,ub)
+            for j=1,#search_pool do
+                local opp_id = search_pool[j]
+                if opp_id ~= cid then
+                    redis.call('ZREM',metadata_key,cid)
+                    redis.call('ZREM',queue_key,cid)
+                    redis.call('ZREM',metadata_key,opp_id)
+                    redis.call('ZREM',queue_key,opp_id)
+                    return {cid,opp_id}
+                end
+            end
+        end
+    end
+end
+
+return {}
+"""
+
+matchmaker_script = r.register_script(MATCHMAKING_LUA_SCRIPT)
+
 
 async def matchmake():
-    key1="coden:queue:metadata"
-    key2="coden:queue"
+    current_time = int(time.time())
+    batch_size = 10
 
-    c = await r.zrange(key1,0,0,withscores=True)
+    matchup = await matchmaker_script([metadata_key,queue_key],[current_time,batch_size])
 
-    if c:
-        c_id = c[0][0]
-        c_time = c[0][1]
-    else:
-        return False
-
-    c_delta = calculateDelta(c_time)
-    c_score_raw = await r.zscore(key2,c_id)
-
-
-    if(c_score_raw is None):
-        await removePlayer(c_id)
+    if matchup:
+        #TODO: Redis Pub/Sub
         return True
-    c_score = int(c_score_raw)
-
-    lowerbound = c_score - c_delta
-    upperbound = c_score + c_delta
-
-    search_pool = await r.zrange(key2,lowerbound,upperbound,byscore=True,withscores=False)
-    opponent_id = ""
-
-    for user in search_pool:
-        if(user!=c_id):
-            opponent_id=user
-            break
     
-    if(opponent_id!=""):       
-        matchup = {c_id:opponent_id}
-        await asyncio.gather(removePlayer(c_id),removePlayer(opponent_id))
-
-        #TODO: create room and send websocket response 
-
-        return True
-
     return False
 
 async def matchmaker():
