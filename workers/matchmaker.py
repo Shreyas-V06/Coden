@@ -1,4 +1,4 @@
-from services.redis_queue import r,removePlayer,metadata_key,queue_key
+from services.redis_queue import r,metadata_key,queue_key
 import asyncio
 import time
 
@@ -51,8 +51,9 @@ async def matchmake():
 
     matchup = await matchmaker_script([metadata_key,queue_key],[current_time,batch_size])
 
-    if matchup:
-        #TODO: Redis Pub/Sub
+    if matchup: 
+        #Publish
+
         return True
     
     return False
