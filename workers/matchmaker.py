@@ -1,4 +1,5 @@
 from services.redis_queue import r,metadata_key,queue_key
+from services.redis_pubsub import publish_match
 import asyncio
 import time
 
@@ -52,8 +53,7 @@ async def matchmake():
     matchup = await matchmaker_script([metadata_key,queue_key],[current_time,batch_size])
 
     if matchup: 
-        #Publish
-
+        await publish_match({"player1_id":matchup[0],"player2_id":matchup[1]})
         return True
     
     return False
@@ -61,7 +61,6 @@ async def matchmake():
 async def matchmaker():
     while(True):
         matched = await matchmake()
-
         if not matched:
             await asyncio.sleep(1)
         else:
