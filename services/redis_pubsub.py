@@ -1,5 +1,6 @@
 import redis.asyncio as redis
 import json 
+from api.websockets.manager import manager
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -14,9 +15,8 @@ async def listen_to_matches():
             print("Match Recieved : ",parsed_data)
             player1_id = parsed_data['player1_id']
             player2_id = parsed_data['player2_id']
+            await manager.notify(player1_id,player2_id,"TESTROOM123")
             
-            #create a room 
-            #notify the roomids to players
 
 async def publish_match(matchup:dict):
     payload = json.dumps(matchup)
