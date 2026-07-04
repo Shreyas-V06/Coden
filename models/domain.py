@@ -8,8 +8,8 @@ class User(BaseModel):
     score:float
 
 class Question(BaseModel):
-    question_id:str
     problem_statement:str
+    difficulty:Literal["easy","medium","hard","expert"]
     testcase_input: List[str]
     testcase_output: List[str]
     weight:float
