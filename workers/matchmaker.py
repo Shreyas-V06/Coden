@@ -1,4 +1,4 @@
-from services.redis_queue import r,metadata_key,queue_key
+from services.redis import r,metadata_key,queue_key
 from services.redis_pubsub import publish_match
 import asyncio
 import time

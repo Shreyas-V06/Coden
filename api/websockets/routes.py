@@ -1,6 +1,6 @@
 from api.websockets.manager import manager
 from fastapi import WebSocket,APIRouter
-from services.redis_queue import addPlayer,removePlayer
+from services.redis import addPlayer,removePlayer
 router = APIRouter()
 
 
