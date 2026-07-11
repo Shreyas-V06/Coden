@@ -4,6 +4,9 @@ from core.utils import generate_question_id
 from fastapi import HTTPException, status
 
 
+DIFFICULTY_ORDER = ["easy", "medium", "hard", "expert"]
+
+
 async def create_question(question_in:Question)->dict:
     db = get_db()
     document = question_in.model_dump()
@@ -49,4 +52,27 @@ async def update_question(question_id: str, question_data: dict) -> dict:
             detail="Question not found."
         )
     return {"status": "success", "message": "question updated successfully."}
+
+
+async def get_questions_by_difficulty() -> list[str]:
+    db = get_db()
+    question_ids: list[str] = []
+
+    for difficulty in DIFFICULTY_ORDER:
+        pipeline = [
+            {"$match": {"difficulty": difficulty}},
+            {"$project": {"_id": 0, "question_id": 1}},
+            {"$limit": 1},
+        ]
+        questions = await db.questions.aggregate(pipeline).to_list(length=1)
+
+        if not questions:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Question not found for difficulty level: {difficulty}."
+            )
+
+        question_ids.append(questions[0]["question_id"])
+
+    return question_ids
   
