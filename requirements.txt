@@ -7,3 +7,5 @@ pytest-asyncio
 httpx
 websockets
 motor
+dotenv
+jwt

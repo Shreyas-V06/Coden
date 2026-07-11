@@ -34,6 +34,10 @@ async def addRoom(roomid: str, player1_id: str, player2_id: str, question_ids: l
     await r.hset(rooms_key, roomid, json.dumps(room))
 
 
-    
+async def removeRoom(roomid: str):
+    await r.hdel(rooms_key, roomid)
+
+
+
     
     
