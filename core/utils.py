@@ -27,3 +27,5 @@ def generate_jwt_token(player_id: str, room_id: str, expires_in_hours: int = 1) 
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token
+
+

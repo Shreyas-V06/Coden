@@ -8,4 +8,4 @@ httpx
 websockets
 motor
 dotenv
-jwt
+pyjwt
