@@ -19,13 +19,18 @@ def generate_user_id() -> str:
 def generate_question_id() -> str:
     return "qsn".join(secrets.choice(CHARACTER_SET) for _ in range(UID_SHORT_LENGTH))
 
-def generate_jwt_token(player_id: str, room_id: str, expires_in_hours: int = 1) -> str:
+def generate_jwt_token(player_id: str, room_id: str,player_no:int, expires_in_hours: int = 1, ) -> str:
     payload = {
         "player_id": player_id,
         "room_id": room_id,
+        "player_no":player_no,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=expires_in_hours),
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     return token
 
-
+def decode_jwt_token(token: str):
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.PyJWTError:
+        return None

@@ -7,8 +7,6 @@ async def createRoom(player1_id,player2_id):
     question_ids = generate_question_id()
     await addRoom(room_id,player1_id,player2_id,question_ids)
     player1_token = generate_jwt_token(player1_id,room_id,1)
-    player2_token = generate_jwt_token(player2_id,room_id,1)
+    player2_token = generate_jwt_token(player2_id,room_id,2)
     return {"player1_token":player1_token,"player2_token":player2_token,"room_id":room_id}
 
-
-    

@@ -23,7 +23,7 @@ async def removePlayer(player_id:str):
         pipe.zrem(metadata_key,player_id)
         await pipe.execute()
 
-async def addRoom(roomid: str, player1_id: str, player2_id: str, question_ids: list[str], status_value: str = "empty"):
+async def addRoom(roomid: str, player1_id: str, player2_id: str, question_ids: list[str], status_value: str = "EMPTY"):
     room = {
         "roomid": roomid,
         "player1_id": player1_id,
@@ -31,11 +31,33 @@ async def addRoom(roomid: str, player1_id: str, player2_id: str, question_ids: l
         "question_ids": question_ids,
         "status": status_value,
     }
-    await r.hset(rooms_key, roomid, json.dumps(room))
+    async with await r.pipeline(transaction=True) as pipe:
+        pipe.hset(rooms_key, roomid, json.dumps(room))
+        await pipe.execute()
+
+
+async def updateRoomStatus(roomid: str, new_status: str):
+    while True:
+        try:
+            await r.watch(rooms_key)
+            raw_room = await r.hget(rooms_key, roomid)
+            if not raw_room:
+                await r.unwatch()
+                return False
+            room = json.loads(raw_room)
+            room["status"] = new_status
+            async with await r.pipeline(transaction=True) as pipe:
+                pipe.hset(rooms_key, roomid, json.dumps(room))
+                await pipe.execute()
+            return True
+        except redis.WatchError:
+            continue
 
 
 async def removeRoom(roomid: str):
-    await r.hdel(rooms_key, roomid)
+    async with await r.pipeline(transaction=True) as pipe:
+        pipe.hdel(rooms_key, roomid)
+        await pipe.execute()
 
 
 

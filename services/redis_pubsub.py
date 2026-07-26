@@ -1,6 +1,6 @@
 import redis.asyncio as redis
 import json 
-from api.websockets.manager import manager
+from api.websockets.managers import manager
 from services.room import createRoom
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
@@ -33,3 +33,5 @@ async def publish_match(matchup:dict):
     payload = json.dumps(matchup)
     print("Match published : ",payload)
     await r.publish("coden:matches",payload)
+
+

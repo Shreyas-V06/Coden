@@ -1,6 +1,8 @@
-from api.websockets.manager import manager
-from fastapi import WebSocket,APIRouter
+from api.websockets.managers import manager,gm
+from fastapi import WebSocket,APIRouter,HTTPException,status
+from core.utils import decode_jwt_token
 from services.redis import addPlayer,removePlayer
+
 router = APIRouter()
 
 
@@ -10,9 +12,23 @@ async def join_matchmaking(websocket: WebSocket, player_id: str, score: float):
     try:
         await addPlayer(player_id,score)
         while True:
-                await websocket.receive_text()
+            await websocket.receive_text()
     except:
          manager.disconnect(player_id)
          await removePlayer(player_id)
 
 
+@router.websocket("/rooms/{room_id}")
+async def join_room(websocket: WebSocket,room_id:str,player_token:str):
+     payload = decode_jwt_token(player_token)
+     if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+     start_game = await gm.connect(room_id,payload['player_id'],websocket)
+     if start_game:
+         #trigger_start
+         pass
+     else:
+        #trigger_background_loop
+        pass
+     
+    
