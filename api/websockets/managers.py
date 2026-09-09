@@ -1,16 +1,35 @@
-from fastapi import WebSocket
+from fastapi import WebSocket, status
 from services.redis import updateRoomStatus
 
 class ConnectionManager:
     def __init__(self):
         self.active_connections: dict = {}
 
-    async def connect(self, player_id:str, websocket: WebSocket):
+    async def connect(self, player_id: str, websocket: WebSocket):
         await websocket.accept()
-        self.active_connections[player_id]=websocket
+        old_ws = self.active_connections.get(player_id)
+        self.active_connections[player_id] = websocket
 
-    def disconnect(self, player_id:str):
-        self.active_connections.pop(player_id)
+        if old_ws and old_ws != websocket:
+            try:
+                notification = {
+                    "status": "error",
+                    "message": "You have logged in from a different device",
+                }
+                await old_ws.send_json(data=notification)
+                await old_ws.close(
+                    code=status.WS_1008_POLICY_VIOLATION,
+                    reason="You have logged in from a different device",
+                )
+            except Exception:
+                pass
+
+    def disconnect(self, player_id: str, websocket: WebSocket | None = None):
+        if websocket is None or self.active_connections.get(player_id) == websocket:
+            self.active_connections.pop(player_id, None)
+
+    def has_active_connections(self, player_id: str) -> bool:
+        return player_id in self.active_connections
 
     async def notify(self,player1_id:str,player2_id:str,room_id:str,player1_token:str,player2_token:str):
 
@@ -33,12 +52,12 @@ class ConnectionManager:
             try:
                 await ws1.send_json(data=notification_p1)
             except Exception:
-                self.disconnect(player_id=player1_id)                
+                self.disconnect(player_id=player1_id, websocket=ws1)                
         if ws2:
             try:
                 await ws2.send_json(data=notification_p2)
             except Exception:
-                self.disconnect(player_id=player2_id)
+                self.disconnect(player_id=player2_id, websocket=ws2)
 
     async def broadcast(self, message: str):
         for connection in self.active_connections.values():

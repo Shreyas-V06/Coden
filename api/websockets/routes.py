@@ -14,8 +14,9 @@ async def join_matchmaking(websocket: WebSocket, player_id: str, score: float):
         while True:
             await websocket.receive_text()
     except:
-         manager.disconnect(player_id=player_id)
-         await removePlayer(player_id=player_id)
+        manager.disconnect(player_id=player_id, websocket=websocket)
+        if not manager.has_active_connections(player_id=player_id):
+            await removePlayer(player_id=player_id)
 
 
 @router.websocket(path="/rooms/{room_id}")
