@@ -59,6 +59,5 @@ async def removeRoom(roomid: str):
         await pipe.execute()
 
 
-
-    
-    
+async def clearQueue():
+    await r.delete(queue_key, metadata_key)

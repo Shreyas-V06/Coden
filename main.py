@@ -4,9 +4,11 @@ from fastapi import FastAPI
 from workers.matchmaker import matchmaker  
 from services.redis_pubsub import listen_to_matches  
 from api.websockets.routes import router as matchmaking_router
+from services.redis import clearQueue
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await clearQueue()
     worker_task = asyncio.create_task(coro=matchmaker())
     listener_task = asyncio.create_task(coro=listen_to_matches())
     yield  
