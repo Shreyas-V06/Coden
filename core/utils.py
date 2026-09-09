@@ -5,8 +5,8 @@ import jwt
 from dotenv import load_dotenv
 load_dotenv()
 
-SECRET_KEY = os.getenv("SECRET_KEY")
-ALGORITHM = os.getenv("ALGORITHM", "HS256")
+SECRET_KEY = os.getenv(key="SECRET_KEY")
+ALGORITHM = os.getenv(key="ALGORITHM", default="HS256")
 
 CHARACTER_SET = "abcdefghjkmnopqrstuvwxyz23456789"
 UID_SHORT_LENGTH = 6
@@ -26,11 +26,11 @@ def generate_jwt_token(player_id: str, room_id: str,player_no:int, expires_in_ho
         "player_no":player_no,
         "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=expires_in_hours),
     }
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
     return token
 
 def decode_jwt_token(token: str):
     try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return jwt.decode(jwt=token, key=SECRET_KEY, algorithms=[ALGORITHM])
     except jwt.PyJWTError:
         return None

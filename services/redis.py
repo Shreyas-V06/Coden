@@ -13,8 +13,8 @@ async def addPlayer(player_id:str,player_score:float):
     timestamp = int(time.time())
     player_metadata = {player_id:timestamp}
     async with await r.pipeline(transaction=True) as pipe:
-        pipe.zadd(metadata_key,player_metadata)
-        pipe.zadd(queue_key,{player_id:player_score})
+        pipe.zadd(name=metadata_key, mapping=player_metadata)
+        pipe.zadd(name=queue_key, mapping={player_id: player_score})
         await pipe.execute()
 
 async def removePlayer(player_id:str):
@@ -32,7 +32,7 @@ async def addRoom(roomid: str, player1_id: str, player2_id: str, question_ids: l
         "status": status_value,
     }
     async with await r.pipeline(transaction=True) as pipe:
-        pipe.hset(rooms_key, roomid, json.dumps(room))
+        pipe.hset(name=rooms_key, key=roomid, value=json.dumps(obj=room))
         await pipe.execute()
 
 
@@ -40,19 +40,18 @@ async def updateRoomStatus(roomid: str, new_status: str):
     while True:
         try:
             await r.watch(rooms_key)
-            raw_room = await r.hget(rooms_key, roomid)
+            raw_room = await r.hget(name=rooms_key, key=roomid)
             if not raw_room:
                 await r.unwatch()
                 return False
-            room = json.loads(raw_room)
+            room = json.loads(s=raw_room)
             room["status"] = new_status
             async with await r.pipeline(transaction=True) as pipe:
-                pipe.hset(rooms_key, roomid, json.dumps(room))
+                pipe.hset(name=rooms_key, key=roomid, value=json.dumps(obj=room))
                 await pipe.execute()
             return True
         except redis.WatchError:
             continue
-
 
 async def removeRoom(roomid: str):
     async with await r.pipeline(transaction=True) as pipe:

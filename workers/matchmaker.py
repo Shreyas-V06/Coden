@@ -43,17 +43,17 @@ end
 return {}
 """
 
-matchmaker_script = r.register_script(MATCHMAKING_LUA_SCRIPT)
+matchmaker_script = r.register_script(script=MATCHMAKING_LUA_SCRIPT)
 
 
 async def matchmake():
     current_time = int(time.time())
     batch_size = 10
 
-    matchup = await matchmaker_script([metadata_key,queue_key],[current_time,batch_size])
+    matchup = await matchmaker_script(keys=[metadata_key, queue_key], args=[current_time, batch_size])
 
     if matchup: 
-        await publish_match({"player1_id":matchup[0],"player2_id":matchup[1]})
+        await publish_match(matchup={"player1_id": matchup[0], "player2_id": matchup[1]})
         return True
     
     return False
@@ -62,9 +62,9 @@ async def matchmaker():
     while(True):
         matched = await matchmake()
         if not matched:
-            await asyncio.sleep(1)
+            await asyncio.sleep(delay=1)
         else:
-            await asyncio.sleep(0.01)
+            await asyncio.sleep(delay=0.01)
 
 
 

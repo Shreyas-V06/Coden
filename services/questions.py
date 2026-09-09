@@ -11,7 +11,7 @@ async def create_question(question_in:Question)->dict:
     db = get_db()
     document = question_in.model_dump()
     document['question_id']=generate_question_id()
-    result = await db.questions.insert_one(document)
+    result = await db.questions.insert_one(document=document)
     if not result.acknowledged:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -22,7 +22,7 @@ async def create_question(question_in:Question)->dict:
 
 async def delete_question(question_id: str) -> dict:
     db = get_db()
-    result = await db.questions.delete_one({"question_id": question_id})
+    result = await db.questions.delete_one(filter={"question_id": question_id})
 
     if result.deleted_count == 0:
         raise HTTPException(
@@ -43,8 +43,8 @@ async def update_question(question_id: str, question_data: dict) -> dict:
             detail="No update data provided."
         )
     result = await db.questions.update_one(
-        {"question_id": question_id},
-        {"$set": updates}
+        filter={"question_id": question_id},
+        update={"$set": updates}
     )
     if result.matched_count == 0:
         raise HTTPException(
@@ -64,7 +64,7 @@ async def get_questions_by_difficulty() -> list[str]:
             {"$project": {"_id": 0, "question_id": 1}},
             {"$limit": 1},
         ]
-        questions = await db.questions.aggregate(pipeline).to_list(length=1)
+        questions = await db.questions.aggregate(pipeline=pipeline).to_list(length=1)
 
         if not questions:
             raise HTTPException(

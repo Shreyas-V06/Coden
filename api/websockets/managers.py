@@ -31,19 +31,19 @@ class ConnectionManager:
 
         if ws1:
             try:
-                await ws1.send_json(notification_p1)
+                await ws1.send_json(data=notification_p1)
             except Exception:
-                self.disconnect(player1_id)                
+                self.disconnect(player_id=player1_id)                
         if ws2:
             try:
-                await ws2.send_json(notification_p2)
+                await ws2.send_json(data=notification_p2)
             except Exception:
-                self.disconnect(player2_id)
+                self.disconnect(player_id=player2_id)
 
     async def broadcast(self, message: str):
         for connection in self.active_connections.values():
             try:
-                await connection.send_text(message)
+                await connection.send_text(data=message)
             except Exception:
                 pass
 
@@ -62,9 +62,9 @@ class GameManager:
         trigger_start = False
 
         if connection_count == 1:
-            await updateRoomStatus(room_id, "WAITING")
+            await updateRoomStatus(roomid=room_id, new_status="WAITING")
         elif connection_count == 2:
-            await updateRoomStatus(room_id, "LIVE")
+            await updateRoomStatus(roomid=room_id, new_status="LIVE")
             trigger_start = True
 
         return trigger_start
@@ -81,9 +81,9 @@ class GameManager:
 
         for player_id, websocket in room_connections:
             try:
-                await websocket.send_json(payload)
+                await websocket.send_json(data=payload)
             except Exception:
-                await self.disconnect(room_id, player_id)
+                await self.disconnect(room_id=room_id, player_id=player_id)
 
 
 manager = ConnectionManager()

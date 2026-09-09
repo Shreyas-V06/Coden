@@ -8,12 +8,12 @@ class MongoDBManager:
 
     async def connect(self):
         self.client = AsyncIOMotorClient(
-            os.getenv("MONGO_URI", "mongodb://localhost:27017"),
+            host=os.getenv(key="MONGO_URI", default="mongodb://localhost:27017"),
             maxPoolSize=100,
             minPoolSize=10,
             serverSelectionTimeoutMS=5000
         )
-        self.db = self.client[os.getenv("MONGO_DB_NAME", "coden_game")]
+        self.db = self.client[os.getenv(key="MONGO_DB_NAME", default="coden_game")]
 
     async def disconnect(self):
         if self.client:

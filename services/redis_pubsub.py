@@ -14,24 +14,24 @@ async def listen_to_matches():
             continue
         try:
             raw_data = message["data"]
-            parsed_data = json.loads(raw_data)
+            parsed_data = json.loads(s=raw_data)
             player1_id = parsed_data["player1_id"]
             player2_id = parsed_data["player2_id"]
-            room_details = await createRoom(player1_id, player2_id)
+            room_details = await createRoom(player1_id=player1_id, player2_id=player2_id)
             print("Match Recieved: ", room_details)
             await manager.notify(
-                player1_id,
-                player2_id,
-                room_details["room_id"],
-                room_details["player1_token"],
-                room_details["player2_token"],
+                player1_id=player1_id,
+                player2_id=player2_id,
+                room_id=room_details["room_id"],
+                player1_token=room_details["player1_token"],
+                player2_token=room_details["player2_token"],
             )
         except Exception as exc:
             print("listen_to_matches error:", exc)
 
 async def publish_match(matchup:dict):
-    payload = json.dumps(matchup)
+    payload = json.dumps(obj=matchup)
     print("Match published : ",payload)
-    await r.publish("coden:matches",payload)
+    await r.publish(channel="coden:matches", message=payload)
 
 
