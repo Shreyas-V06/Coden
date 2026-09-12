@@ -9,32 +9,40 @@ metadata_key = "coden:queue:metadata"
 queue_key = "coden:queue"
 rooms_key = "coden:rooms"
 
-async def addPlayer(player_id:str,player_score:float):
+async def addPlayer(player_id: str, player_score: float):
     timestamp = int(time.time())
-    player_metadata = {player_id:timestamp}
+    player_metadata = {player_id: timestamp}
     async with await r.pipeline(transaction=True) as pipe:
         pipe.zadd(name=metadata_key, mapping=player_metadata)
         pipe.zadd(name=queue_key, mapping={player_id: player_score})
         await pipe.execute()
 
-async def removePlayer(player_id:str):
-    async with await  r.pipeline(transaction=True) as pipe:
-        pipe.zrem(queue_key,player_id)
-        pipe.zrem(metadata_key,player_id)
+async def removePlayer(player_id: str):
+    async with await r.pipeline(transaction=True) as pipe:
+        pipe.zrem(queue_key, player_id)
+        pipe.zrem(metadata_key, player_id)
         await pipe.execute()
 
-async def addRoom(roomid: str, player1_id: str, player2_id: str, question_ids: list[str], status_value: str = "EMPTY"):
+async def addRoom(
+    roomid: str,
+    player1_id: str,
+    player2_id: str,
+    problem_ids: list[str] | None = None,
+    question_ids: list[str] | None = None,
+    status_value: str = "EMPTY",
+):
+    ids = problem_ids if problem_ids is not None else (question_ids or [])
     room = {
         "roomid": roomid,
         "player1_id": player1_id,
         "player2_id": player2_id,
-        "question_ids": question_ids,
+        "problem_ids": ids,
+        "question_ids": ids,
         "status": status_value,
     }
     async with await r.pipeline(transaction=True) as pipe:
         pipe.hset(name=rooms_key, key=roomid, value=json.dumps(obj=room))
         await pipe.execute()
-
 
 async def updateRoomStatus(roomid: str, new_status: str):
     while True:
@@ -57,7 +65,6 @@ async def removeRoom(roomid: str):
     async with await r.pipeline(transaction=True) as pipe:
         pipe.hdel(rooms_key, roomid)
         await pipe.execute()
-
 
 async def clearQueue():
     await r.delete(queue_key, metadata_key)

@@ -1,5 +1,5 @@
 from fastapi import WebSocket, status
-from services.redis import updateRoomStatus
+from utils.redis import updateRoomStatus
 
 class ConnectionManager:
     def __init__(self):

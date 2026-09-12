@@ -2,9 +2,9 @@ import asyncio
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from workers.matchmaker import matchmaker  
-from services.redis_pubsub import listen_to_matches  
+from utils.redis_pubsub import listen_to_matches  
 from api.websockets.routes import router as matchmaking_router
-from services.redis import clearQueue
+from utils.redis import clearQueue
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

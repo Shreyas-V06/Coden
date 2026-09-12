@@ -1,5 +1,5 @@
-from services.redis import r,metadata_key,queue_key
-from services.redis_pubsub import publish_match
+from utils.redis import r, metadata_key, queue_key
+from utils.redis_pubsub import publish_match
 import asyncio
 import time
 

@@ -1,7 +1,7 @@
 import redis.asyncio as redis
 import json 
 from api.websockets.managers import manager
-from services.room import createRoom
+from utils.room import createRoom
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 

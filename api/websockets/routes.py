@@ -2,8 +2,9 @@ import asyncio
 import json
 from api.websockets.managers import manager,gm
 from fastapi import WebSocket,APIRouter,HTTPException,status
-from core.utils import decode_jwt_token
-from services.redis import addPlayer,removePlayer
+from core.database import get_db
+from utils.general import decode_jwt_token
+from utils.redis import addPlayer, removePlayer
 
 router = APIRouter()
 

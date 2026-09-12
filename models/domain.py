@@ -7,22 +7,29 @@ class User(BaseModel):
     user_id:str
     score:float
 
-class Question(BaseModel):
+class Problem(BaseModel):
     problem_statement:str
     difficulty:Literal["easy","medium","hard","expert"]
     testcase_input: List[str]
     testcase_output: List[str]
     weight:float
 
+# Backwards compatibility alias
+Question = Problem
+
 class Submission(BaseModel):
-    question_id:str
+    problem_id:str
     language:Literal["java","cpp","python"]
     code:str
     user_id:str
     submission_time:int
 
+    @property
+    def question_id(self) -> str:
+        return self.problem_id
+
 class Response(BaseModel):
-    question_id:str
+    problem_id:str
     delta:float
     is_solved:bool
     user_id:str
@@ -30,6 +37,11 @@ class Response(BaseModel):
     evaluation_time:int
     evaluation_space:int
     verdict:str
+
+    @property
+    def question_id(self) -> str:
+        return self.problem_id
+
     
 
 
