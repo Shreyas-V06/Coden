@@ -5,7 +5,8 @@ class MongoDBManager:
     def __init__(self):
         self.client = None
         self.db = None
-
+    
+    #Connection Pooling 
     async def connect(self):
         self.client = AsyncIOMotorClient(
             host=os.getenv(key="MONGO_URI", default="mongodb://localhost:27017"),
