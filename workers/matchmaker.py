@@ -64,7 +64,7 @@ async def matchmaker():
         if not matched:
             await asyncio.sleep(delay=1)
         else:
-            await asyncio.sleep(delay=0.01)
+            await asyncio.sleep(delay=0.5)
 
 
 
