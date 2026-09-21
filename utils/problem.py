@@ -77,9 +77,5 @@ async def get_problems_by_difficulty() -> list[str]:
     return problem_ids
 
 
-# Backwards compatibility aliases
-create_question = create_problem
-delete_question = delete_problem
-update_question = update_problem
-get_questions_by_difficulty = get_problems_by_difficulty
+
 

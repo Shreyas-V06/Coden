@@ -1,46 +1,22 @@
-from pydantic import BaseModel,EmailStr
-from typing import List,Literal
+from pydantic import BaseModel, EmailStr
+from typing import List, Literal, Optional
 
 class User(BaseModel):
-    username:str
-    email:EmailStr
-    user_id:str
-    score:float
+    username: str
+    email: EmailStr
+    user_id: str
+    score: float
 
 class Problem(BaseModel):
-    problem_statement:str
-    difficulty:Literal["easy","medium","hard","expert"]
+    problem_id: Optional[str] = None
+    problem_statement: str
+    difficulty: Literal["easy", "medium", "hard", "expert"]
     testcase_input: List[str]
     testcase_output: List[str]
-    weight:float
+    weight: float
 
-# Backwards compatibility alias
-Question = Problem
 
-class Submission(BaseModel):
-    problem_id:str
-    language:Literal["java","cpp","python"]
-    code:str
-    user_id:str
-    submission_time:int
 
-    @property
-    def question_id(self) -> str:
-        return self.problem_id
-
-class Response(BaseModel):
-    problem_id:str
-    delta:float
-    is_solved:bool
-    user_id:str
-    penalty:int
-    evaluation_time:int
-    evaluation_space:int
-    verdict:str
-
-    @property
-    def question_id(self) -> str:
-        return self.problem_id
 
     
 

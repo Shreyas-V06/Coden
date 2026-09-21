@@ -13,21 +13,14 @@ UID_SHORT_LENGTH = 6
 UID_LONG_LENGTH = 10
 
 def generate_room_id() -> str:
-    return "".join(secrets.choice(CHARACTER_SET) for _ in range(UID_SHORT_LENGTH))
+    return "cdnrm"+"".join(secrets.choice(CHARACTER_SET) for _ in range(UID_SHORT_LENGTH))
 def generate_user_id() -> str:
-    return "usr".join(secrets.choice(CHARACTER_SET) for _ in range(UID_LONG_LENGTH))
+    return "cdnusr"+"".join(secrets.choice(CHARACTER_SET) for _ in range(UID_LONG_LENGTH))
 def generate_problem_id() -> str:
-    return "prb".join(secrets.choice(CHARACTER_SET) for _ in range(UID_SHORT_LENGTH))
+    return "cdnprob"+"".join(secrets.choice(CHARACTER_SET) for _ in range(UID_SHORT_LENGTH))
 
-generate_question_id = generate_problem_id
-
-def generate_jwt_token(player_id: str, room_id: str,player_no:int, expires_in_hours: int = 1, ) -> str:
-    payload = {
-        "player_id": player_id,
-        "room_id": room_id,
-        "player_no":player_no,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=expires_in_hours),
-    }
+def generate_jwt_token(payload:dict, expires_in_hours: int = 1) -> str:
+    payload['exp']=datetime.datetime.utcnow() + datetime.timedelta(hours=expires_in_hours)
     token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=ALGORITHM)
     return token
 

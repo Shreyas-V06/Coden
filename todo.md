@@ -1,3 +1,9 @@
-Remove score from join_matchmaking route instead validate them from player_details present in MongoDB
+# To Do Next
+Start implementing CreateRoom
+
+# Improvements 
+migrating from In CPU connections to using redis for matchmaking connections , to enable horizontal scaling
+
+Improve matchmaking algorithm 
 
 

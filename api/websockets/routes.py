@@ -1,22 +1,30 @@
 import asyncio
 import json
-from api.websockets.managers import manager,gm
+from api.websockets.managers import manager
 from fastapi import WebSocket,APIRouter,HTTPException,status
-from core.database import get_db
 from utils.general import decode_jwt_token
-from utils.redis import addPlayer, removePlayer
+from utils.redis import addPlayer,removePlayer
+
 
 router = APIRouter()
 
-HEARTBEAT_INTERVAL: float = 10.0
-HEARTBEAT_TIMEOUT: float = 5.0
+HEARTBEAT_INTERVAL: float = 50.0
+HEARTBEAT_TIMEOUT: float = 50.0
 
 
 @router.websocket(path="/matchmaking")
-async def join_matchmaking(websocket: WebSocket, player_id: str, score: float):
+async def join_matchmaking(websocket: WebSocket, token: str):
+    payload = decode_jwt_token(token=token)
+    if payload is None:
+        await websocket.close(
+            code=status.WS_1008_POLICY_VIOLATION,
+            reason="Invalid token",
+        )
+        return
+    player_id = payload["userid"]
+    score = payload["score"]
     await manager.connect(player_id=player_id, websocket=websocket)
     pong_event = asyncio.Event()
-
     async def heartbeat():
         while True:
             await asyncio.sleep(delay=HEARTBEAT_INTERVAL)
@@ -56,17 +64,5 @@ async def join_matchmaking(websocket: WebSocket, player_id: str, score: float):
         heartbeat_task.cancel()
 
 
-@router.websocket(path="/rooms/{room_id}")
-async def join_room(websocket: WebSocket,room_id:str,player_token:str):
-     payload = decode_jwt_token(token=player_token)
-     if not payload:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-     start_game = await gm.connect(room_id=room_id, player_id=payload['player_id'], websocket=websocket)
-     
-     if start_game:
-         #trigger_start
-         pass
-     else:
-        #trigger_background_loop
-        pass
+
     

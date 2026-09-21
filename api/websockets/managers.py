@@ -1,5 +1,5 @@
 from fastapi import WebSocket, status
-from utils.redis import updateRoomStatus
+
 
 class ConnectionManager:
     def __init__(self):
@@ -67,43 +67,5 @@ class ConnectionManager:
                 pass
 
 
-class GameManager:
-    def __init__(self):
-        self.active_connections: dict = {}
-
-    async def connect(self, room_id: str, player_id: str, websocket: WebSocket) -> bool:
-        await websocket.accept()
-        if room_id not in self.active_connections:
-            self.active_connections[room_id] = {}
-        self.active_connections[room_id][player_id] = websocket
-        
-        connection_count = len(self.active_connections[room_id])
-        trigger_start = False
-
-        if connection_count == 1:
-            await updateRoomStatus(roomid=room_id, new_status="WAITING")
-        elif connection_count == 2:
-            await updateRoomStatus(roomid=room_id, new_status="LIVE")
-            trigger_start = True
-
-        return trigger_start
-
-    async def disconnect(self,room_id:str,player_id:str):
-        if room_id not in self.active_connections:
-            return
-        self.active_connections[room_id].pop(player_id, None)
-        if len(self.active_connections[room_id]) == 0:
-                del self.active_connections[room_id]
-
-    async def broadcast_to_room(self,room_id:str,payload:dict):
-        room_connections = list(self.active_connections.get(room_id, {}).items())
-
-        for player_id, websocket in room_connections:
-            try:
-                await websocket.send_json(data=payload)
-            except Exception:
-                await self.disconnect(room_id=room_id, player_id=player_id)
-
-
 manager = ConnectionManager()
-gm = GameManager()
+
