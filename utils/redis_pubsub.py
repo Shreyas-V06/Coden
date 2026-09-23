@@ -1,7 +1,8 @@
 import redis.asyncio as redis
 import json 
 from api.websockets.managers import manager
-
+from utils.redis import createRoom
+from utils.general import generate_jwt_token
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
@@ -18,16 +19,15 @@ async def listen_to_matches():
             player1_id = parsed_data["player1_id"]
             player2_id = parsed_data["player2_id"]
 
-            #TODO: ADD CREATE ROOM AND NOTIFY
-
-            # room_details = await createRoom(player1_id=player1_id, player2_id=player2_id)
+            
+            room_details = await createRoom(player1_id=player1_id, player2_id=player2_id)
             print("Match Recieved")
             await manager.notify(
                 player1_id=player1_id,
                 player2_id=player2_id,
-                room_id="testroom",
-                player1_token="testtoken1",
-                player2_token="testtoken2",
+                room_id=room_details["room_id"],
+                player1_token=generate_jwt_token({"room_id":room_details["room_id"],"player_id":player1_id}),
+                player2_token=generate_jwt_token({"room_id":room_details["room_id"],"player_id":player2_id}),
             )
             
         except Exception as exc:

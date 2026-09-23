@@ -2,69 +2,72 @@ import redis.asyncio as redis
 import json
 import time
 from fastapi import HTTPException, status
+from utils.general import generate_room_id
+from utils.problem import get_problems_by_difficulty
 
 r = redis.Redis(host='localhost', port=6379, decode_responses=True)
 
 metadata_key = "coden:queue:metadata"
 queue_key = "coden:queue"
-rooms_key = "coden:rooms"
+rooms_key_prefix = "coden:rooms"
+ROOM_STATUS_EMPTY = "EMPTY"
 
-async def addPlayer(player_id: str, player_score: float):
+async def addPlayer(player_id:str,player_score:float):
     timestamp = int(time.time())
-    player_metadata = {player_id: timestamp}
+    player_metadata = {player_id:timestamp}
     async with await r.pipeline(transaction=True) as pipe:
         pipe.zadd(name=metadata_key, mapping=player_metadata)
         pipe.zadd(name=queue_key, mapping={player_id: player_score})
         await pipe.execute()
 
-async def removePlayer(player_id: str):
-    async with await r.pipeline(transaction=True) as pipe:
-        pipe.zrem(queue_key, player_id)
-        pipe.zrem(metadata_key, player_id)
+async def removePlayer(player_id:str):
+    async with await  r.pipeline(transaction=True) as pipe:
+        pipe.zrem(queue_key,player_id)
+        pipe.zrem(metadata_key,player_id)
         await pipe.execute()
 
-async def addRoom(
-    roomid: str,
-    player1_id: str,
-    player2_id: str,
-    problem_ids: list[str] | None = None,
-    question_ids: list[str] | None = None,
-    status_value: str = "EMPTY",
-):
-    ids = problem_ids if problem_ids is not None else (question_ids or [])
-    room = {
-        "roomid": roomid,
+async def clearMatchmakingQueue():
+    await r.delete(queue_key, metadata_key)
+
+
+async def createRoom(player1_id: str, player2_id: str) -> dict:
+ 
+    room_id = generate_room_id()
+    problem_ids = await get_problems_by_difficulty()
+
+    difficulties = ["easy", "medium", "hard", "expert"]
+    problems = [
+        {
+            "problem_id": problem_ids[i],
+            "difficulty": difficulties[i],
+            player1_id: False,
+            player2_id: False,
+        }
+        for i in range(len(difficulties))
+    ]
+
+ 
+    room_data = {
+        "room_id": room_id,
+        "status": ROOM_STATUS_EMPTY,
+        "player1": player1_id,
+        "player2": player2_id,
+        "ends_at": 0,          
+        "scores": {
+            player1_id: 0,
+            player2_id: 0,
+        },
+        "problems": problems,
+        "messages": {},
+    }
+
+
+    redis_key = f"{rooms_key_prefix}:{room_id}"
+    await r.set(redis_key, json.dumps(room_data))
+
+
+    return {
+        "room_id": room_id,
         "player1_id": player1_id,
         "player2_id": player2_id,
-        "problem_ids": ids,
-        "question_ids": ids,
-        "status": status_value,
     }
-    async with await r.pipeline(transaction=True) as pipe:
-        pipe.hset(name=rooms_key, key=roomid, value=json.dumps(obj=room))
-        await pipe.execute()
-
-async def updateRoomStatus(roomid: str, new_status: str):
-    while True:
-        try:
-            await r.watch(rooms_key)
-            raw_room = await r.hget(name=rooms_key, key=roomid)
-            if not raw_room:
-                await r.unwatch()
-                return False
-            room = json.loads(s=raw_room)
-            room["status"] = new_status
-            async with await r.pipeline(transaction=True) as pipe:
-                pipe.hset(name=rooms_key, key=roomid, value=json.dumps(obj=room))
-                await pipe.execute()
-            return True
-        except redis.WatchError:
-            continue
-
-async def removeRoom(roomid: str):
-    async with await r.pipeline(transaction=True) as pipe:
-        pipe.hdel(rooms_key, roomid)
-        await pipe.execute()
-
-async def clearQueue():
-    await r.delete(queue_key, metadata_key)
